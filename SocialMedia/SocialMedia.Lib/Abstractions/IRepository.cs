@@ -8,5 +8,6 @@ namespace SocialMedia.SocialMedia.Lib.Abstractions
     {
         void add(T entity);
         IEnumerable<T> GetAll();
+        T GetById(Guid id);
     }
 }

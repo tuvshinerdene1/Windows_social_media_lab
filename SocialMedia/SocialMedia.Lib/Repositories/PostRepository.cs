@@ -12,5 +12,9 @@ namespace SocialMedia.SocialMedia.Lib.Repositories
         public void add(Post entity) => _posts.Add(entity);
 
         public IEnumerable<Post> GetAll() => _posts;
+        public Post GetById(Guid id)
+        {
+            return _posts.Find(p => p.Id == id);
+        }
     }
 }
