@@ -8,7 +8,7 @@ using System.Text;
 namespace SocialMedia.SocialMedia.Lib.Services
 {
     /// <summary>
-    /// Коммент бичих үйлдлийг удирдах үйлчилгээний класс.
+    /// Коммент бичих үйлдлийг удирдах класс.
     /// </summary>
     public class CommentService
     {

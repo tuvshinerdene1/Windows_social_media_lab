@@ -236,7 +236,7 @@ class Program
             }
             Console.ReadKey();
         }
-        else if (choice == "3") // Show Friends Logic
+        else if (choice == "3")
         {
             Console.WriteLine("\n--- My Friends ---");
             var friends = FriendService.GetFriendsList(currentUser);

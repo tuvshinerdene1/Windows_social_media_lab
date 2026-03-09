@@ -50,7 +50,6 @@ namespace SocialMedia.SocialMedia.Lib.Services
         {
             var acceptedRequests = _repo.GetAcceptedRequests(username);
 
-            // We want the name of the OTHER person in the request
             return acceptedRequests.Select(r =>
                 r.SenderUsername == username ? r.ReceiverUsername : r.SenderUsername
             ).ToList();
