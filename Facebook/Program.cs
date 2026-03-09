@@ -1,41 +1,49 @@
-﻿using SocialMedia.SocialMedia.Lib.Repositories;
+﻿using SocialMedia.SocialMedia.Lib.Models;
+using SocialMedia.SocialMedia.Lib.Repositories;
 using SocialMedia.SocialMedia.Lib.Services;
-
 
 namespace SocialMedia.ConsoleApp;
 
 class Program
 {
-    // Dependencies (Static so they are accessible by all methods)
     private static readonly UserRepository UserRepo = new();
     private static readonly PostRepository PostRepo = new();
+    private static readonly FriendRequestRepository FriendRepo = new();
+
     private static readonly UserService UserService = new(UserRepo);
     private static readonly AuthService AuthService = new(UserRepo);
     private static readonly PostService PostService = new(PostRepo);
+    private static readonly CommentService CommentService = new();
+    private static readonly FriendService FriendService = new(FriendRepo);
 
     static void Main(string[] args)
     {
+        UserRepo.add(new User("admin", "admin123", 30, UserRole.Admin));
+
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         bool running = true;
 
         while (running)
         {
             Console.Clear();
-            Console.WriteLine("=== SOCIAL PLATFORM CLONE ===");
+            Console.WriteLine("=== ENTERPRISE SOCIAL PLATFORM ===");
 
             if (AuthService.CurrentUser == null)
             {
                 ShowGuestMenu();
+                string choice = Console.ReadLine() ?? "";
+                running = HandleGuestInput(choice);
             }
             else
             {
                 ShowUserMenu();
+                string choice = Console.ReadLine() ?? "";
+                running = HandleUserInput(choice);
             }
-
-            string choice = Console.ReadLine() ?? "";
-            running = HandleInput(choice);
         }
     }
+
+    #region Menus
 
     static void ShowGuestMenu()
     {
@@ -47,39 +55,55 @@ class Program
 
     static void ShowUserMenu()
     {
-        Console.WriteLine($"Welcome back, {AuthService.CurrentUser!.Username}!");
+        var user = AuthService.CurrentUser!;
+        Console.WriteLine($"Logged in as: {user.Username} ({user.Role})");
         Console.WriteLine("------------------------------");
         Console.WriteLine("1. Create a New Post");
-        Console.WriteLine("2. View Feed (Like/Comment)");
-        Console.WriteLine("3. Logout");
-        Console.WriteLine("4. Exit");
+        Console.WriteLine("2. View News Feed (Like/Comment)");
+        Console.WriteLine("3. Friends Management (Requests)");
+
+        if (user.Role == UserRole.Admin)
+        {
+            Console.WriteLine("A. Admin Dashboard (View All Users)");
+        }
+
+        Console.WriteLine("L. Logout");
+        Console.WriteLine("E. Exit");
         Console.Write("\nSelect an option: ");
     }
 
-    static bool HandleInput(string choice)
+    #endregion
+
+    #region Input Handlers
+
+    static bool HandleGuestInput(string choice)
     {
-        if (AuthService.CurrentUser == null)
+        switch (choice)
         {
-            switch (choice)
-            {
-                case "1": Register(); return true;
-                case "2": Login(); return true;
-                case "3": return false;
-                default: return true;
-            }
-        }
-        else
-        {
-            switch (choice)
-            {
-                case "1": CreatePost(); return true;
-                case "2": ViewFeed(); return true;
-                case "3": AuthService.Logout(); return true;
-                case "4": return false;
-                default: return true;
-            }
+            case "1": Register(); return true;
+            case "2": Login(); return true;
+            case "3": return false;
+            default: return true;
         }
     }
+
+    static bool HandleUserInput(string choice)
+    {
+        switch (choice.ToUpper())
+        {
+            case "1": CreatePost(); return true;
+            case "2": ViewFeed(); return true;
+            case "3": ManageFriends(); return true;
+            case "A":
+                if (AuthService.CurrentUser?.Role == UserRole.Admin) ViewAllUsers();
+                return true;
+            case "L": AuthService.Logout(); return true;
+            case "E": return false;
+            default: return true;
+        }
+    }
+
+    #endregion
 
     #region Actions
 
@@ -87,11 +111,11 @@ class Program
     {
         Console.Clear();
         Console.WriteLine("--- Register ---");
-        Console.Write("Enter Username: ");
+        Console.Write("Username: ");
         string name = Console.ReadLine() ?? "";
-        Console.Write("Enter Password: ");
+        Console.Write("Password: ");
         string pass = Console.ReadLine() ?? "";
-        Console.Write("Enter Age: ");
+        Console.Write("Age: ");
 
         if (byte.TryParse(Console.ReadLine(), out byte age))
         {
@@ -101,8 +125,6 @@ class Program
         {
             Console.WriteLine("Invalid age. Registration failed.");
         }
-
-        Console.WriteLine("Press any key to continue...");
         Console.ReadKey();
     }
 
@@ -116,21 +138,15 @@ class Program
         string pass = Console.ReadLine() ?? "";
 
         AuthService.Login(name, pass);
-
-        Console.WriteLine("Press any key to continue...");
         Console.ReadKey();
     }
 
     static void CreatePost()
     {
         Console.Clear();
-        Console.WriteLine("--- Create Post ---");
         Console.Write("What's on your mind? ");
         string content = Console.ReadLine() ?? "";
-
         PostService.CreatePost(AuthService.CurrentUser!, content);
-
-        Console.WriteLine("\nPost shared! Press any key...");
         Console.ReadKey();
     }
 
@@ -142,27 +158,83 @@ class Program
 
         if (!posts.Any())
         {
-            Console.WriteLine("No posts yet. Be the first to post!");
+            Console.WriteLine("No posts yet.");
         }
         else
         {
             for (int i = 0; i < posts.Count; i++)
             {
-                var post = posts[i];
-                Console.WriteLine($"[{i + 1}] {post.authorId}: {post.Content}");
-                Console.WriteLine($"    Likes: {post.LikeCount} | Created: {post.CreatedAt}");
+                var p = posts[i];
+                Console.WriteLine($"[{i + 1}] {p.authorId}: {p.Content}");
+                Console.WriteLine($"    Likes: {p.LikedByUsers.Count} | Comments: {p.Comments.Count}");
                 Console.WriteLine("    --------------------------");
             }
 
-            Console.WriteLine("\nEnter Post Number to Like, or '0' to go back:");
-            if (int.TryParse(Console.ReadLine(), out int index) && index > 0 && index <= posts.Count)
+            Console.WriteLine("\nEnter Post Number to Interact (or 0 to back):");
+            if (int.TryParse(Console.ReadLine(), out int idx) && idx > 0 && idx <= posts.Count)
             {
-                posts[index - 1].Like();
-                Console.WriteLine("You liked this post!");
+                InteractWithPost(posts[idx - 1]);
             }
         }
+        Console.ReadKey();
+    }
 
-        Console.WriteLine("\nPress any key...");
+    static void InteractWithPost(Post post)
+    {
+        Console.Clear();
+        Console.WriteLine($"Post by {post.authorId}: {post.Content}");
+        Console.WriteLine("\n--- Comments ---");
+        foreach (var c in post.Comments) Console.WriteLine($"- {c.authorId}: {c.Content}");
+
+        Console.WriteLine("\n1. Like/Unlike | 2. Add Comment | 3. Back");
+        string choice = Console.ReadLine();
+
+        if (choice == "1")
+            PostService.LikePost(post, AuthService.CurrentUser!.Username);
+        else if (choice == "2")
+        {
+            Console.Write("Comment text: ");
+            string text = Console.ReadLine() ?? "";
+            CommentService.AddComment(post, AuthService.CurrentUser!, text);
+        }
+    }
+
+    static void ManageFriends()
+    {
+        Console.Clear();
+        Console.WriteLine("--- Friends ---");
+        Console.WriteLine("1. Send Friend Request");
+        Console.WriteLine("2. View Pending Requests");
+        string choice = Console.ReadLine();
+
+        if (choice == "1")
+        {
+            Console.Write("Enter Username: ");
+            string target = Console.ReadLine() ?? "";
+            FriendService.SendRequest(AuthService.CurrentUser!.Username, target);
+        }
+        else if (choice == "2")
+        {
+            var requests = FriendRepo.GetIncomingRequests(AuthService.CurrentUser!.Username).ToList();
+            foreach (var r in requests)
+            {
+                Console.Write($"Request from {r.SenderUsername}. Accept? (y/n): ");
+                bool accept = Console.ReadLine()?.ToLower() == "y";
+                FriendService.RespondToRequest(r.Id, accept);
+            }
+        }
+        Console.ReadKey();
+    }
+
+    static void ViewAllUsers()
+    {
+        Console.Clear();
+        Console.WriteLine("--- ADMIN DASHBOARD: REGISTERED USERS ---");
+        foreach (var u in UserRepo.GetAll())
+        {
+            Console.WriteLine($"- ID: {u.Id} | Name: {u.Username} | Age: {u.Age} | Role: {u.Role}");
+        }
+        Console.WriteLine("\nPress any key to return...");
         Console.ReadKey();
     }
 

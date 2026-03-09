@@ -5,6 +5,9 @@ using System.Text;
 
 namespace SocialMedia.SocialMedia.Lib.Services
 {
+    /// <summary>
+    /// Хэрэглэгчийн нэвтрэлт болон гарах үйлдлийг удирдах үйлчилгээний класс.
+    /// </summary>
     public class AuthService
     {
         private readonly UserRepository _userRepo;

@@ -4,9 +4,13 @@ using System.Text;
 
 namespace SocialMedia.SocialMedia.Lib.Abstractions
 {
+    /// <summary>
+    /// Хэрэглэгчдээс лайк авах боломжтой объектыг төлөөлөх интерфейс.
+    /// </summary>
+    /// <remarks>Лайк дарсан хэрэглэгчдийн жагсаалтыг харах боломжтой</remarks>
     public interface  Ilikeable
     {
-        int LikeCount { get; set; }
-        void Like();
+        List<string> LikedByUsers { get; set; }
+        int LikeCount => LikedByUsers.Count;
     }
 }

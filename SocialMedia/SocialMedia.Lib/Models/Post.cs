@@ -6,15 +6,15 @@ using System.Text;
 
 namespace SocialMedia.SocialMedia.Lib.Models
 {
-    public class Post : ContentBase, Ilikeable, ISharable
+    /// <summary>
+    /// Постыг төлөөлөх класс. Хэрэглэгчийн бичсэн постыг илэрхийлэх бөгөөд лайк, сэтгэгдэл бичих боломжтой.
+    /// </summary>
+    public class Post : ContentBase, Ilikeable, ISharable, ICommentable
     {
-        public int LikeCount { get; set; }
+        public List<string> LikedByUsers { get; set; } = new List<string>();
+        public List<Comment> Comments { get; set; } = new List<Comment>();
 
-        public void Like()
-        {
-            LikeCount++;
-            Console.WriteLine("Post liked!");
-        }
+
 
         public void Share(string platform)
         {

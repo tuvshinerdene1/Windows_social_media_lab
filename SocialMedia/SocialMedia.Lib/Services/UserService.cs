@@ -6,6 +6,9 @@ using System.Text;
 
 namespace SocialMedia.SocialMedia.Lib.Services
 {
+    /// <summary>
+    /// Хэрэглэгчийн бүртгэл үүсгэх үйлдлийг удирдах үйлчилгээний класс.
+    /// </summary>
     public class UserService
     {
         private readonly IUserRepository _userRepo;

@@ -5,6 +5,9 @@ using System.Text;
 
 namespace SocialMedia.SocialMedia.Lib.Abstractions
 {
+    /// <summary>
+    /// Хэрэглэгчийн мэдээллийг удирдах репозиторийн интерфейс.
+    /// </summary>
     public interface IUserRepository : IRepository<Models.User>
     {
         User GetByUsername(string username);

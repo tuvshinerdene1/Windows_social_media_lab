@@ -6,6 +6,9 @@ using System.Text;
 
 namespace SocialMedia.SocialMedia.Lib.Repositories
 {
+    /// <summary>
+    /// Хэрэглэгчийн бичсэн постыг удирдах репозиторийн хэрэгжилт. Энэ класс нь постуудыг хадгалах, авах, болон удирдах үүрэгтэй.
+    /// </summary>
     public class PostRepository : IRepository<Post>
     {
         private List<Post> _posts = new();
