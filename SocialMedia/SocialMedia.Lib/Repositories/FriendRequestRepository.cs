@@ -24,5 +24,12 @@ namespace SocialMedia.SocialMedia.Lib.Repositories
 
         public IEnumerable<FriendRequest> GetIncomingRequests(string username)
             => _requests.Where(r => r.ReceiverUsername == username && r.Status == FriendRequestStatus.Pending);
+
+        public IEnumerable<FriendRequest> GetAcceptedRequests(string username)
+        {
+            return _requests.Where(r =>
+                r.Status == FriendRequestStatus.Accepted &&
+                (r.SenderUsername == username || r.ReceiverUsername == username));
+        }
     }
 }

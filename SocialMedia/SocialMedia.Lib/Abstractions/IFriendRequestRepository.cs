@@ -12,5 +12,6 @@ namespace SocialMedia.SocialMedia.Lib.Abstractions
     {
       
         IEnumerable<FriendRequest> GetIncomingRequests(string username);
+        IEnumerable<FriendRequest> GetAcceptedRequests(string username);
     }
 }

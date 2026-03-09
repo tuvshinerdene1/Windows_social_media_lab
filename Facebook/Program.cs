@@ -202,30 +202,60 @@ class Program
     static void ManageFriends()
     {
         Console.Clear();
-        Console.WriteLine("--- Friends ---");
+        Console.WriteLine("--- Friends Management ---");
         Console.WriteLine("1. Send Friend Request");
         Console.WriteLine("2. View Pending Requests");
+        Console.WriteLine("3. View My Friends List"); // New Option
+        Console.WriteLine("4. Back");
+
         string choice = Console.ReadLine();
+        string currentUser = AuthService.CurrentUser.Username;
 
         if (choice == "1")
         {
-            Console.Write("Enter Username: ");
+            Console.Write("Enter Username to add: ");
             string target = Console.ReadLine() ?? "";
-            FriendService.SendRequest(AuthService.CurrentUser!.Username, target);
+            FriendService.SendRequest(currentUser, target);
+            Console.ReadKey();
         }
         else if (choice == "2")
         {
-            var requests = FriendRepo.GetIncomingRequests(AuthService.CurrentUser!.Username).ToList();
-            foreach (var r in requests)
+            var incoming = FriendRepo.GetIncomingRequests(currentUser).ToList();
+            if (!incoming.Any())
             {
-                Console.Write($"Request from {r.SenderUsername}. Accept? (y/n): ");
-                bool accept = Console.ReadLine()?.ToLower() == "y";
-                FriendService.RespondToRequest(r.Id, accept);
+                Console.WriteLine("No pending requests.");
             }
+            else
+            {
+                foreach (var r in incoming)
+                {
+                    Console.Write($"Request from {r.SenderUsername}. Accept? (y/n): ");
+                    bool accept = Console.ReadLine()?.ToLower() == "y";
+                    FriendService.RespondToRequest(r.Id, accept);
+                }
+            }
+            Console.ReadKey();
         }
-        Console.ReadKey();
-    }
+        else if (choice == "3") // Show Friends Logic
+        {
+            Console.WriteLine("\n--- My Friends ---");
+            var friends = FriendService.GetFriendsList(currentUser);
 
+            if (!friends.Any())
+            {
+                Console.WriteLine("You haven't added any friends yet.");
+            }
+            else
+            {
+                foreach (var friendName in friends)
+                {
+                    Console.WriteLine($"- {friendName}");
+                }
+            }
+            Console.WriteLine("\nPress any key to return...");
+            Console.ReadKey();
+        }
+    }
     static void ViewAllUsers()
     {
         Console.Clear();
