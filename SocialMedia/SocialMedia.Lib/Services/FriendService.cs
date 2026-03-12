@@ -1,8 +1,5 @@
 ﻿using SocialMedia.SocialMedia.Lib.Abstractions;
 using SocialMedia.SocialMedia.Lib.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SocialMedia.SocialMedia.Lib.Services
 {
@@ -53,6 +50,10 @@ namespace SocialMedia.SocialMedia.Lib.Services
             return acceptedRequests.Select(r =>
                 r.SenderUsername == username ? r.ReceiverUsername : r.SenderUsername
             ).ToList();
+        }
+        public List<FriendRequest> GetPendingRequests(string username)
+        {
+            return _repo.GetIncomingRequests(username).ToList();
         }
     }
 }

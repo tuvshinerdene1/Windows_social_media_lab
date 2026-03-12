@@ -1,24 +1,16 @@
-﻿using SocialMedia.SocialMedia.Lib.Models;
-using SocialMedia.SocialMedia.Lib.Repositories;
+﻿using SocialMedia.Configuration;
+using SocialMedia.SocialMedia.Lib.Models;
 using SocialMedia.SocialMedia.Lib.Services;
 
 namespace SocialMedia.ConsoleApp;
 
 class Program
 {
-    private static readonly UserRepository UserRepo = new();
-    private static readonly PostRepository PostRepo = new();
-    private static readonly FriendRequestRepository FriendRepo = new();
-
-    private static readonly UserService UserService = new(UserRepo);
-    private static readonly AuthService AuthService = new(UserRepo);
-    private static readonly PostService PostService = new(PostRepo);
-    private static readonly CommentService CommentService = new();
-    private static readonly FriendService FriendService = new(FriendRepo);
+    private static readonly ServiceManager Services = Startup.ConfigureServices();
 
     static void Main(string[] args)
     {
-        UserRepo.add(new User("admin", "admin123", 30, UserRole.Admin));
+        Services.User.RegisterUser("admin", "admin123", 30, UserRole.Admin);
 
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         bool running = true;
@@ -28,7 +20,7 @@ class Program
             Console.Clear();
             Console.WriteLine("=== ENTERPRISE SOCIAL PLATFORM ===");
 
-            if (AuthService.CurrentUser == null)
+            if (Services.Auth.CurrentUser == null)
             {
                 ShowGuestMenu();
                 string choice = Console.ReadLine() ?? "";
@@ -55,7 +47,7 @@ class Program
 
     static void ShowUserMenu()
     {
-        var user = AuthService.CurrentUser!;
+        var user = Services.Auth.CurrentUser!;
         Console.WriteLine($"Logged in as: {user.Username} ({user.Role})");
         Console.WriteLine("------------------------------");
         Console.WriteLine("1. Create a New Post");
@@ -95,9 +87,9 @@ class Program
             case "2": ViewFeed(); return true;
             case "3": ManageFriends(); return true;
             case "A":
-                if (AuthService.CurrentUser?.Role == UserRole.Admin) ViewAllUsers();
+                if (Services.Auth.CurrentUser?.Role == UserRole.Admin) ViewAllUsers();
                 return true;
-            case "L": AuthService.Logout(); return true;
+            case "L": Services.Auth.Logout(); return true;
             case "E": return false;
             default: return true;
         }
@@ -119,7 +111,7 @@ class Program
 
         if (byte.TryParse(Console.ReadLine(), out byte age))
         {
-            UserService.RegisterUser(name, pass, age);
+            Services.User.RegisterUser(name, pass, age, UserRole.Member);
         }
         else
         {
@@ -137,7 +129,7 @@ class Program
         Console.Write("Password: ");
         string pass = Console.ReadLine() ?? "";
 
-        AuthService.Login(name, pass);
+        Services.Auth.Login(name, pass);
         Console.ReadKey();
     }
 
@@ -146,7 +138,7 @@ class Program
         Console.Clear();
         Console.Write("What's on your mind? ");
         string content = Console.ReadLine() ?? "";
-        PostService.CreatePost(AuthService.CurrentUser!, content);
+        Services.Post.CreatePost(Services.Auth.CurrentUser!, content);
         Console.ReadKey();
     }
 
@@ -154,7 +146,7 @@ class Program
     {
         Console.Clear();
         Console.WriteLine("--- News Feed ---");
-        var posts = PostRepo.GetAll().ToList();
+        var posts = Services.Post.GetFeed().ToList();
 
         if (!posts.Any())
         {
@@ -190,12 +182,12 @@ class Program
         string choice = Console.ReadLine();
 
         if (choice == "1")
-            PostService.LikePost(post, AuthService.CurrentUser!.Username);
+            Services.Post.LikePost(post, Services.Auth.CurrentUser!.Username);
         else if (choice == "2")
         {
             Console.Write("Comment text: ");
             string text = Console.ReadLine() ?? "";
-            CommentService.AddComment(post, AuthService.CurrentUser!, text);
+            Services.Comment.AddComment(post, Services.Auth.CurrentUser!, text);
         }
     }
 
@@ -209,18 +201,18 @@ class Program
         Console.WriteLine("4. Back");
 
         string choice = Console.ReadLine();
-        string currentUser = AuthService.CurrentUser.Username;
+        string currentUser = Services.Auth.CurrentUser.Username;
 
         if (choice == "1")
         {
             Console.Write("Enter Username to add: ");
             string target = Console.ReadLine() ?? "";
-            FriendService.SendRequest(currentUser, target);
+            Services.Friend.SendRequest(currentUser, target);
             Console.ReadKey();
         }
         else if (choice == "2")
         {
-            var incoming = FriendRepo.GetIncomingRequests(currentUser).ToList();
+            var incoming = Services.Friend.GetPendingRequests(currentUser);
             if (!incoming.Any())
             {
                 Console.WriteLine("No pending requests.");
@@ -231,7 +223,7 @@ class Program
                 {
                     Console.Write($"Request from {r.SenderUsername}. Accept? (y/n): ");
                     bool accept = Console.ReadLine()?.ToLower() == "y";
-                    FriendService.RespondToRequest(r.Id, accept);
+                    Services.Friend.RespondToRequest(r.Id, accept);
                 }
             }
             Console.ReadKey();
@@ -239,7 +231,7 @@ class Program
         else if (choice == "3")
         {
             Console.WriteLine("\n--- My Friends ---");
-            var friends = FriendService.GetFriendsList(currentUser);
+            var friends = Services.Friend.GetFriendsList(currentUser);
 
             if (!friends.Any())
             {
@@ -260,7 +252,7 @@ class Program
     {
         Console.Clear();
         Console.WriteLine("--- ADMIN DASHBOARD: REGISTERED USERS ---");
-        foreach (var u in UserRepo.GetAll())
+        foreach (var u in Services.User.GetAllUsers())
         {
             Console.WriteLine($"- ID: {u.Id} | Name: {u.Username} | Age: {u.Age} | Role: {u.Role}");
         }

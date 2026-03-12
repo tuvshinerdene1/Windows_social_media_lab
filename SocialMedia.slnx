@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="Facebook/Facebook.csproj" />
+  <Project Path="SocialMedia.Configuration/SocialMedia.Configuration.csproj" Id="20de3621-6ed2-4224-b767-8b926a897300" />
   <Project Path="SocialMedia/SocialMedia.csproj" />
 </Solution>

@@ -1,8 +1,5 @@
 ﻿using SocialMedia.SocialMedia.Lib.Abstractions;
 using SocialMedia.SocialMedia.Lib.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SocialMedia.SocialMedia.Lib.Services
 {
@@ -17,8 +14,23 @@ namespace SocialMedia.SocialMedia.Lib.Services
         {
             _userRepo = userRepo;
         }
+        public User GetUser(string username)
+        {
+            var user = _userRepo.GetByUsername(username);
+            if (user == null)
+            {
+                Console.WriteLine($"Warning: User {username} not found");
+            }
+            return user;
+        }
 
-        public void RegisterUser(string username, string password, byte age)
+        public IEnumerable<User> GetAllUsers()
+        {
+            return _userRepo.GetAll();
+        }
+
+
+        public void RegisterUser(string username, string password, byte age, UserRole role)
         {
             if (_userRepo.GetByUsername(username) != null)
             {
@@ -26,7 +38,7 @@ namespace SocialMedia.SocialMedia.Lib.Services
                 return;
             }
 
-            var newUser = new User(username, password, age);
+            var newUser = new User(username, password, age, role);
             _userRepo.add(newUser);
             Console.WriteLine($"User {username} registered successfully.");
         }
